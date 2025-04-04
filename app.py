@@ -1,18 +1,20 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, render_template
 import pandas as pd
 import os
 from collections import defaultdict
-from datetime import datetime
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Allow all origin
+CORS(app)  # Allow all origins (Modify in production)
 
 # Load CSV File
 CSV_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scrapeddata.csv")
 
 # Function to process CSV
 def process_csv():
+    if not os.path.exists(CSV_FILE_PATH):
+        return {"error": "CSV file not found"}
+
     try:
         df = pd.read_csv(CSV_FILE_PATH)
 
@@ -48,9 +50,9 @@ def process_csv():
     except Exception as e:
         return {"error": str(e)}
 
-# @app.route("/")
-# def index():
-#     return send_from_directory(app.static_folder, "index.html")
+@app.route("/")
+def index():
+    return render_template("index.html")  # ✅ This will serve index.html from the templates folder
 
 @app.route("/api/data")
 def get_data():
