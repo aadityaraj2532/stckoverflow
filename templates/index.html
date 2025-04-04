@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 StackOverflow Trends (2022-2025)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        /* Cyberpunk Theme */
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #0d0d1f;
+            color: #ffffff;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 95%;
+            margin-top: 20px;
+        }
+
+        h2 {
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: 0 0 10px cyan;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 20px rgba(0, 255, 255, 0.5);
+            margin-top: 20px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 50px;
+            font-size: 18px;
+            color: #ffcc00;
+        }
+
+        .loading::after {
+            content: "";
+            width: 30px;
+            height: 30px;
+            margin-left: 10px;
+            border: 4px solid transparent;
+            border-top-color: cyan;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Error Message */
+        .error {
+            color: #ff4d4d;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* Buttons */
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, #ff6b6b, #45caff);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s ease-in-out;
+        }
+
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>🔥 StackOverflow Trends (2022-2025)</h2>
+
+        <div class="loading">⏳ Loading data...</div>
+        <p class="error">⚠️ Failed to load data. Please check the API.</p>
+
+        <div class="chart-container">
+            <canvas id="tagChart"></canvas>
+        </div>
+
+        <div class="button-container">
+            <button class="btn-custom" onclick="fetchData()">🔄 Refresh Data</button>
+            <button class="btn-custom" onclick="toggleChartType()">📊 Toggle Chart Type</button>
+        </div>
+    </div>
+
+    <script>
+        let chartType = 'line';
+        let chartInstance = null;
+
+        async function fetchData() {
+    try {
+        document.querySelector(".loading").style.display = "flex";
+        document.querySelector(".error").style.display = "none";
+
+        const response = await fetch('https://aadi2532.pythonanywhere.com/api/data', {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        document.querySelector(".loading").style.display = "none";
+        renderChart(data.years, data.tags);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        document.querySelector(".loading").style.display = "none";
+        document.querySelector(".error").innerText = `⚠️ ${error.message}`;
+        document.querySelector(".error").style.display = "block";
+    }
+}
+
+        function renderChart(years, tags) {
+            const ctx = document.getElementById('tagChart').getContext('2d');
+            
+            const colors = [
+                '#ff5733', '#33ff57', '#3357ff', '#ff33a1', '#a133ff',
+                '#33fff6', '#ff9633', '#ff3333', '#9cff33', '#33a1ff'
+            ];
+
+            const datasets = tags.map((tag, index) => ({
+                label: tag.name,
+                data: tag.data,
+                borderColor: colors[index % colors.length],
+                backgroundColor: colors[index % colors.length] + '66',
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 6,
+                pointHoverRadius: 10,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: colors[index % colors.length],
+                pointBorderWidth: 2,
+                hoverBorderWidth: 4
+            }));
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: chartType,
+                data: { labels: years, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            labels: { 
+                                color: '#fff',
+                                font: {
+                                    family: 'Orbitron',
+                                    size: 12
+                                }
+                            },
+                            position: 'right',
+                            align: 'start'
+                        },
+                        tooltip: { 
+                            backgroundColor: '#2b2b4b', 
+                            titleColor: '#fff', 
+                            bodyColor: '#fff',
+                            titleFont: {
+                                family: 'Orbitron'
+                            },
+                            bodyFont: {
+                                family: 'Orbitron'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '🔥 StackOverflow Tag Trends',
+                            color: '#fff',
+                            font: {
+                                family: 'Orbitron',
+                                size: 20,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { 
+                                display: true, 
+                                text: 'Number of Questions', 
+                                color: '#fff',
+                                font: {
+                                    family: 'Orbitron'
+                                }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                            ticks: { 
+                                color: '#fff',
+                                font: {
+                                    family: 'Orbitron'
+                                }
+                            }
+                        },
+                        x: {
+                            title: { 
+                                display: true, 
+                                text: 'Year', 
+                                color: '#fff',
+                                font: {
+                                    family: 'Orbitron'
+                                }
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.2)' },
+                            ticks: { 
+                                color: '#fff',
+                                font: {
+                                    family: 'Orbitron'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function toggleChartType() {
+            chartType = (chartType === 'line') ? 'bar' : 'line';
+            fetchData();
+        }
+
+        fetchData();
+    </script>
+
+</body>
+
+</html> 
