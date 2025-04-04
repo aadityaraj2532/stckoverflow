@@ -1,3 +1,6 @@
 Flask
-flask-cors
 pandas
+flask-cors
+waitress
+gunicorn
+numpy
