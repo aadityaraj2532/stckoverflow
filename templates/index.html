@@ -140,7 +140,7 @@
         document.querySelector(".loading").style.display = "flex";
         document.querySelector(".error").style.display = "none";
 
-        const response = await fetch('https://aadi2532.pythonanywhere.com/api/data', {
+        const response = await fetch('/api/data', {
             method: "GET",
             headers: {
                 "Accept": "application/json"
